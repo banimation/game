@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "exactOptionalPropertyTypes": true,
+        "module": "CommonJS",
+        "lib": ["ESNext", "DOM"],
+        "noEmitOnError": true,
+        "noUnusedParameters": true,
+        "outDir": "public/dist",
+        "strict": true,
+        "target": "ESNext"
+    },
+    "include": ["src/**/*"]
+}

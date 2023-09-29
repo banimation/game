@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "socket.io-client": "^4.7.2",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.6.5",
+    "@types/socket.io-client": "^3.0.0"
+  }
+}
