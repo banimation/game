@@ -7,15 +7,6 @@
 body {
     overflow: hidden;
     height: 100%;
-    background-image: url(https://i.pinimg.com/originals/86/1f/3d/861f3d4b28c2335e26be4f9d5c18ca76.png);
-}
-#canvas {
-    position: absolute;
-    border: solid 1px #000;
-}
-#canvas2 {
-    position: absolute;
-    border: solid 1px #000;
 }
 #v {
     width: 100%;

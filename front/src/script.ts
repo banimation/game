@@ -1,9 +1,27 @@
-import { io } from "socket.io-client";
+import { io } from "socket.io-client"
+
 const canvas = document.getElementById("canvas") as HTMLCanvasElement
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D
+
+const fogCanvas = document.getElementById("fog") as HTMLCanvasElement
+const fog = fogCanvas.getContext("2d") as CanvasRenderingContext2D
+
+const floorCanvas = document.getElementById("floor") as HTMLCanvasElement
+const floor = floorCanvas.getContext("2d") as CanvasRenderingContext2D
+
+fogCanvas.width = window.innerWidth
+fogCanvas.height = window.innerHeight
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
+floorCanvas.width = window.innerWidth
+floorCanvas.height = window.innerHeight
+
 const walls = new Map<Rect, Rect>()
 const players = new Map<string, Player>()
+let camera: {x: number, y: number} = {x: 0, y: 0}
+
 let userId: string
+
 const socket = io()
 
 type Axis = {
@@ -17,14 +35,20 @@ type Entity = {
     h: number
 }
 
-const fogCanvas = document.getElementById("fog") as HTMLCanvasElement
+const image = new Image()
+const imageSize = 768
+image.src = "/texture/floor.png"
+image.addEventListener("load", () => {
+    renderFloor()
+})
 
-fogCanvas.width = window.innerWidth
-fogCanvas.height = window.innerHeight
-canvas.width = window.innerWidth
-canvas.height = window.innerHeight
-
-const fog = fogCanvas.getContext("2d") as CanvasRenderingContext2D
+function renderFloor() {
+    for (let i = 0; i < 10; i++) {
+        for (let k = 0; k < 10; k++) {
+          ctx.drawImage(image, (k * imageSize + camera.x) - 500, (i * imageSize + camera.y) - 500, imageSize, imageSize)
+        }
+    }
+}
 
 function randomColor() {
     return "#" + Math.floor(Math.random() * 16777215).toString(16)
@@ -53,10 +77,10 @@ function restoreIntersectionPoints(player: Player, rotateAngle: number) {
             const y1 = player.getAxis().y
             const x2 = axis.x
             const y2 = axis.y
-            const x3 = RenderingEngine.rectLines[i].x3
-            const y3 = RenderingEngine.rectLines[i].y3
-            const x4 = RenderingEngine.rectLines[i].x4
-            const y4 = RenderingEngine.rectLines[i].y4
+            const x3 = RenderingEngine.rectLines[i].x1
+            const y3 = RenderingEngine.rectLines[i].y1
+            const x4 = RenderingEngine.rectLines[i].x2
+            const y4 = RenderingEngine.rectLines[i].y2
             const determinedMatrix = (x2 - x1) * (y4 - y3) - (x4 - x3) * (y2 - y1)
             if(determinedMatrix === 0) {continue}
             const scala1 = (1 / determinedMatrix) * ((y3 - y4) * (x3 - x1) + (x4 - x3) * (y3 - y1)) * -1
@@ -87,12 +111,15 @@ function renderPlayerSight(player: Player, axis: Array<Axis>, rotateAngle: numbe
     for(let i = 0; i < axis.length; i++) {
         fog.fillStyle = "rgba(0,0,0,1)"
         fog.globalCompositeOperation = "destination-out"
-        fog.moveTo(player.getAxis().x, player.getAxis().y)
-        fog.lineTo(axis[i].x, axis[i].y)
-        fog.lineTo(axis[i !== (360 / rotateAngle -1) ? i+1 : 0].x, axis[i !== (360 / rotateAngle -1) ? i+1 : 0].y)
+        fog.moveTo(player.getAxis().x + camera.x, player.getAxis().y + camera.y)
+        fog.lineTo(axis[i].x + camera.x, axis[i].y + camera.y)
+        fog.lineTo(axis[i !== (360 / rotateAngle -1)? i+1 : 0].x + camera.x, axis[i !== (360 / rotateAngle -1) ? i+1 : 0].y + camera.y)
     }
     fog.fill()
     fog.closePath()
+    walls.forEach((value, _key) => {
+        fog.fillRect(value.location.x + camera.x, value.location.y + camera.y, value.location.w, value.location.h)
+    })
     fog.restore()
 }
 
@@ -105,10 +132,10 @@ function isEntityInSight(player: Player, entity: Player) {
             const y1 = player.getAxis().y
             const x2 = rayPoints[n].x
             const y2 = rayPoints[n].y
-            const x3 = entity.getLine()[i].x3
-            const y3 = entity.getLine()[i].y3
-            const x4 = entity.getLine()[i].x4
-            const y4 = entity.getLine()[i].y4
+            const x3 = entity.getLine()[i].x1
+            const y3 = entity.getLine()[i].y1
+            const x4 = entity.getLine()[i].x2
+            const y4 = entity.getLine()[i].y2
             const determinedMatrix = (x2 - x1) * (y4 - y3) - (x4 - x3) * (y2 - y1)
             if(determinedMatrix === 0) {continue}
             const scala1 = (1 / determinedMatrix) * ((y3 - y4) * (x3 - x1) + (x4 - x3) * (y3 - y1)) * -1
@@ -121,27 +148,20 @@ function isEntityInSight(player: Player, entity: Player) {
     return isInEyelight
 }
 
-// class camera {
-
-// }
-
 class Player {
     id: string
     location: Entity
     color: string
-    texture: HTMLImageElement
     constructor(id: string, location: Entity, color: string) {
         this.id = id
         this.location = location
         this.color = color
-        this.texture = new Image()
-        this.texture.src = "https://static.wikia.nocookie.net/omori/images/3/35/Keeper_of_the_Castle_%28Unused%29.gif/revision/latest/scale-to-width-down/100?cb=20220211082753"
     }
     create() {
         ctx.save()
         ctx.fillStyle = this.color;
         //ctx.drawImage(this.texture, this.location.x, this.location.y, this.location.w, this.location.h)
-        ctx.fillRect(this.location.x, this.location.y, this.location.w, this.location.h)
+        ctx.fillRect(this.location.x + camera.x, this.location.y + camera.y, this.location.w, this.location.h)
         ctx.restore()
         players.set(this.id, this)
     }
@@ -173,8 +193,8 @@ class Rect {
     }
     create() {
         // 여기 나중에 최적화를 위해서 다 갈아엎어야함
-        ctx.fillStyle = "#000"
-        ctx.fillRect(this.location.x, this.location.y, this.location.w, this.location.h)
+        ctx.fillStyle = "rgb(29, 23, 28)"
+        ctx.fillRect(this.location.x + camera.x, this.location.y + camera.y, this.location.w, this.location.h)
         RenderingEngine.rectVertexes.push(
             {x: this.location.x, y: this.location.y},
             {x: this.location.x, y: (this.location.y + this.location.h)},
@@ -188,6 +208,15 @@ class Rect {
             new Line({x: (this.location.x + this.location.w), y: this.location.y}, {x: this.location.x, y: this.location.y}),
         )
         walls.set(this, this)
+    }
+    getLine() {
+        const lines = [
+            new Line({x: this.location.x, y: this.location.y}, {x: this.location.x, y: (this.location.y + this.location.h)}),
+            new Line({x: this.location.x, y: (this.location.y + this.location.h)}, {x: (this.location.x + this.location.w), y: (this.location.y + this.location.h)}),
+            new Line({x: (this.location.x + this.location.w), y: (this.location.y + this.location.h)}, {x: (this.location.x + this.location.w), y: this.location.y}),
+            new Line({x: (this.location.x + this.location.w), y: this.location.y}, {x: this.location.x, y: this.location.y})
+        ]
+        return lines
     }
 }
 class Ray {
@@ -208,17 +237,25 @@ class Ray {
     }
 }
 class Line {
-    x3: number
-    y3: number
-    x4: number
-    y4: number
+    x1: number
+    y1: number
+    x2: number
+    y2: number
     constructor(p1: Axis, p2: Axis) {
-        this.x3 = p1.x
-        this.y3 = p1.y
-        this.x4 = p2.x
-        this.y4 = p2.y
+        this.x1 = p1.x
+        this.y1 = p1.y
+        this.x2 = p2.x
+        this.y2 = p2.y
     }
 }
+
+function playerToCenter(player: Player) {
+    const x = canvas.width / 2 - player.getAxis().x
+    const y = canvas.height / 2 - player.getAxis().y
+    camera = {x, y}
+}
+
+// engine ================================================================>
 class RenderingEngine {
     static rectLines: Array<Line> = []
     static rectVertexes: Array<Axis> = []
@@ -239,6 +276,14 @@ class RenderingEngine {
 
     static render() {
         RenderingEngine.rectLines = []
+        // camera
+        players.forEach((value, key) => {
+            if(key === userId) {
+                playerToCenter(value)
+            }
+        })
+        // floor
+        renderFloor()
         // walls
         walls.forEach((value, _key) => {
             value.create()
@@ -259,16 +304,14 @@ class RenderingEngine {
         fog.fillStyle = "black"
         fog.fillRect(0, 0, window.innerWidth, window.innerHeight)
         fog.restore()
+        
         /*
         for(const point of RenderingEngine.rayPoints) {
             new Ray(value.getAxis(), point, "red").create()
         }
         */
         renderPlayerSight(myPlayerData, RenderingEngine.rayPoints, RenderingEngine.rotateAngle)
-        walls.forEach((value, _key) => {
-            fog.fillStyle = "rgb(29, 23, 28)"
-            fog.fillRect(value.location.x, value.location.y, value.location.w, value.location.h)
-        })
+        
         RenderingEngine.rectVertexes = []
         RenderingEngine.rayPoints = []
     }
@@ -285,6 +328,8 @@ class RenderingEngine {
         requestAnimationFrame(RenderingEngine.loop)
     }
 }
+
+// socket ==============================================================>
 socket.on("playerJoin", (id) => {
     console.log("joined!")
     userId = id
@@ -293,7 +338,7 @@ socket.on("playerJoin", (id) => {
     RenderingEngine.init()
 })
 socket.on("otherPlayerData", (value) => {
-    new Player(value.id, value.location, randomColor()).create()
+    new Player(value.id, value.location, value.color).create()
 })
 
 // other players leave
@@ -302,8 +347,10 @@ socket.on("playerLeave", (id) => {
 })
 
 socket.on("otherPlayer", (value) => {
-    players.set(value.id, new Player(value.id, value.location, randomColor()))
+    players.set(value.id, new Player(value.id, value.location, value.color))
 })
+
+// player move ===========================================================>
 const keyPress = {
     w: false,
     a: false,
@@ -338,12 +385,13 @@ window.addEventListener('keyup', (event) => {
         keyPress.d = false
     }
 })
-const moveSpeed = 5
+const moveSpeed = 8
 const move = () => {
     players.forEach((value, key) => {
         if(key === userId) {
             if(keyPress.w) {
                 value.move(0, -moveSpeed)
+                
             }
             if(keyPress.a) {
                 value.move(-moveSpeed, 0)
