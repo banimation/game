@@ -343,7 +343,7 @@ class RenderingEngine {
     static loop(timestamp: number) {
         const fps = 1000/60     // 60fps
         const elapsed = timestamp - then
-        if(elapsed >= fps) {
+        if(elapsed >= fps) {  // 60프레임으로 제한
             then = timestamp - (elapsed % fps)
             ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
             RenderingEngine.render()

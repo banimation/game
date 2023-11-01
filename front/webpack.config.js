@@ -2,8 +2,9 @@ const path = require("path")
 module.exports = {
     mode: "production",
     entry : {
-        index : "./src/script.ts",
-        subindex :"./src/main.ts"
+        index : "./src/index.ts",
+        main :"./src/main.ts",
+        room: "./src/room.ts"
     },
     module: {
         rules: [

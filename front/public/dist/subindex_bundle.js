@@ -1,1 +1,0 @@
-(()=>{"use strict";document.getElementById("start").addEventListener("click",(()=>{const e={nickName:document.getElementById("nickName").value};fetch("/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)}),console.log("aa")}))})();
