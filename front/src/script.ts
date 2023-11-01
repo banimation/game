@@ -118,7 +118,7 @@ function renderPlayerSight(player: Player, axis: Array<Axis>, rotateAngle: numbe
     fog.fill()
     fog.closePath()
     walls.forEach((value, _key) => {
-        fog.fillRect(value.location.x + camera.x, value.location.y + camera.y, value.location.w, value.location.h)
+        fog.fillRect(value.data.x + camera.x, value.data.y + camera.y, value.data.w, value.data.h)
     })
     fog.restore()
 }
@@ -147,74 +147,150 @@ function isEntityInSight(player: Player, entity: Player) {
     }
     return isInEyelight
 }
+const moveSpeed = 7
+let collisionDetection = {left: true, down: true, right: true, up: true}
+function detectCollision(player: Player, rect: Rect) {
+    let left = true
+    let down = true
+    let right = true
+    let up = true
+    const vx = player.getAxis().x - rect.getAxis().x
+    const vy = player.getAxis().y - rect.getAxis().y
+    const colliedX = player.data.w / 2 + rect.data.w / 2
+    const colliedY = player.data.h / 2 + rect.data.h / 2
+    if(player.data.x + player.data.w <= rect.data.x && (player.data.y + player.data.h > rect.data.y && player.data.y < rect.data.y + rect.data.h))  {
+        if(Math.abs(vx) <= colliedX) {
+            if(vx < 0) {
+                right = false
+            }
+        }
+    }
+    if(player.data.x + player.data.w >= rect.data.x && (player.data.y + player.data.h > rect.data.y && player.data.y < rect.data.y + rect.data.h)) {
+        if(Math.abs(vx) <= colliedX) {
+            if(vx > 0) {
+                if(collisionDetection.left) {
+                    left = false
+                }
+                
+            }
+        }
+    }
+    if(player.data.y + player.data.h <= rect.data.y && (player.data.x < rect.data.x + rect.data.w && player.data.x + player.data.w > rect.data.x)) {
+        if(Math.abs(vy) <= colliedY) {
+            if(vy < 0) {
+                down = false
+            }
+        }
+    }
+    if(player.data.y + player.data.h >= rect.data.y && (player.data.x < rect.data.x + rect.data.w && player.data.x + player.data.w > rect.data.x)) {
+        if(Math.abs(vy) <= colliedY) {
+            if(vy > 0) {
+                up = false
+            }
+        }
+    }
+    if(!collisionDetection.right) {
+        right = collisionDetection.right
+    }
+    if(!collisionDetection.left) {
+        left = collisionDetection.left
+    }
+    if(!collisionDetection.down) {
+        down = collisionDetection.down
+    }
+    if(!collisionDetection.up) {
+        up = collisionDetection.up
+    }
+    collisionDetection = {left, down, right, up}
+}
 
 class Player {
     id: string
-    location: Entity
+    data: Entity
     color: string
-    constructor(id: string, location: Entity, color: string) {
+    constructor(id: string, data: Entity, color: string) {
         this.id = id
-        this.location = location
+        this.data = data
         this.color = color
     }
     create() {
         ctx.save()
         ctx.fillStyle = this.color;
-        //ctx.drawImage(this.texture, this.location.x, this.location.y, this.location.w, this.location.h)
-        ctx.fillRect(this.location.x + camera.x, this.location.y + camera.y, this.location.w, this.location.h)
+        //ctx.drawImage(this.texture, this.data.x, this.data.y, this.data.w, this.data.h)
+        ctx.fillRect(this.data.x + camera.x, this.data.y + camera.y, this.data.w, this.data.h)
         ctx.restore()
         players.set(this.id, this)
     }
     getAxis() {
         const axis = {
-            x: (this.location.x + this.location.w / 2),
-            y: (this.location.y + this.location.h / 2)
+            x: (this.data.x + this.data.w / 2),
+            y: (this.data.y + this.data.h / 2)
         }
         return axis
     }
     getLine() {
         const lines = [
-            new Line({x: this.location.x, y: this.location.y}, {x: this.location.x, y: (this.location.y + this.location.h)}),
-            new Line({x: this.location.x, y: (this.location.y + this.location.h)}, {x: (this.location.x + this.location.w), y: (this.location.y + this.location.h)}),
-            new Line({x: (this.location.x + this.location.w), y: (this.location.y + this.location.h)}, {x: (this.location.x + this.location.w), y: this.location.y}),
-            new Line({x: (this.location.x + this.location.w), y: this.location.y}, {x: this.location.x, y: this.location.y})
+            new Line({x: this.data.x, y: this.data.y}, {x: this.data.x, y: (this.data.y + this.data.h)}),
+            new Line({x: this.data.x, y: (this.data.y + this.data.h)}, {x: (this.data.x + this.data.w), y: (this.data.y + this.data.h)}),
+            new Line({x: (this.data.x + this.data.w), y: (this.data.y + this.data.h)}, {x: (this.data.x + this.data.w), y: this.data.y}),
+            new Line({x: (this.data.x + this.data.w), y: this.data.y}, {x: this.data.x, y: this.data.y})
         ]
         return lines
     }
-    move(x: number, y: number) {
-        this.location.x += x
-        this.location.y += y
+    move(direction: string) {
+        if(direction === "left") {
+            this.data.x -= 1
+        } else if(direction === "down") {
+            this.data.y += 1
+        } else if(direction === "right") {
+            this.data.x += 1
+        } else if(direction === "up") {
+            this.data.y -= 1
+        }
     }
 }
+const wallImage = new Image()        
+wallImage.src = ""
 class Rect {
-    location: Entity
-    constructor(location: Entity) {
-        this.location = location
+    data: Entity
+    constructor(data: Entity) {
+        this.data = data
     }
     create() {
         // 여기 나중에 최적화를 위해서 다 갈아엎어야함
         ctx.fillStyle = "rgb(29, 23, 28)"
-        ctx.fillRect(this.location.x + camera.x, this.location.y + camera.y, this.location.w, this.location.h)
+        ctx.fillRect(this.data.x + camera.x, this.data.y + camera.y, this.data.w, this.data.h)
+
+        const wallImageSize = {w: this.data.w, h: this.data.h}
+        ctx.drawImage(wallImage, 0, 0, wallImageSize.w, wallImageSize.h, this.data.x + camera.x, this.data.y + camera.y, wallImageSize.w, wallImageSize.h)
+       
         RenderingEngine.rectVertexes.push(
-            {x: this.location.x, y: this.location.y},
-            {x: this.location.x, y: (this.location.y + this.location.h)},
-            {x: (this.location.x + this.location.w), y: (this.location.y + this.location.h)},
-            {x: (this.location.x + this.location.w), y: this.location.y}
+            {x: this.data.x, y: this.data.y},
+            {x: this.data.x, y: (this.data.y + this.data.h)},
+            {x: (this.data.x + this.data.w), y: (this.data.y + this.data.h)},
+            {x: (this.data.x + this.data.w), y: this.data.y}
         )
         RenderingEngine.rectLines.push(
-            new Line({x: this.location.x, y: this.location.y}, {x: this.location.x, y: (this.location.y + this.location.h)}),
-            new Line({x: this.location.x, y: (this.location.y + this.location.h)}, {x: (this.location.x + this.location.w), y: (this.location.y + this.location.h)}),
-            new Line({x: (this.location.x + this.location.w), y: (this.location.y + this.location.h)}, {x: (this.location.x + this.location.w), y: this.location.y}),
-            new Line({x: (this.location.x + this.location.w), y: this.location.y}, {x: this.location.x, y: this.location.y}),
+            new Line({x: this.data.x, y: this.data.y}, {x: this.data.x, y: (this.data.y + this.data.h)}),
+            new Line({x: this.data.x, y: (this.data.y + this.data.h)}, {x: (this.data.x + this.data.w), y: (this.data.y + this.data.h)}),
+            new Line({x: (this.data.x + this.data.w), y: (this.data.y + this.data.h)}, {x: (this.data.x + this.data.w), y: this.data.y}),
+            new Line({x: (this.data.x + this.data.w), y: this.data.y}, {x: this.data.x, y: this.data.y}),
         )
         walls.set(this, this)
     }
+    getAxis() {
+        const axis = {
+            x: (this.data.x + this.data.w / 2),
+            y: (this.data.y + this.data.h / 2)
+        }
+        return axis
+    }
     getLine() {
         const lines = [
-            new Line({x: this.location.x, y: this.location.y}, {x: this.location.x, y: (this.location.y + this.location.h)}),
-            new Line({x: this.location.x, y: (this.location.y + this.location.h)}, {x: (this.location.x + this.location.w), y: (this.location.y + this.location.h)}),
-            new Line({x: (this.location.x + this.location.w), y: (this.location.y + this.location.h)}, {x: (this.location.x + this.location.w), y: this.location.y}),
-            new Line({x: (this.location.x + this.location.w), y: this.location.y}, {x: this.location.x, y: this.location.y})
+            new Line({x: this.data.x, y: this.data.y}, {x: this.data.x, y: (this.data.y + this.data.h)}),
+            new Line({x: this.data.x, y: (this.data.y + this.data.h)}, {x: (this.data.x + this.data.w), y: (this.data.y + this.data.h)}),
+            new Line({x: (this.data.x + this.data.w), y: (this.data.y + this.data.h)}, {x: (this.data.x + this.data.w), y: this.data.y}),
+            new Line({x: (this.data.x + this.data.w), y: this.data.y}, {x: this.data.x, y: this.data.y})
         ]
         return lines
     }
@@ -231,8 +307,8 @@ class Ray {
     create() {
         ctx.strokeStyle = this.color
         ctx.beginPath()
-        ctx.moveTo(this.from.x, this.from.y)
-        ctx.lineTo(this.to.x, this.to.y)
+        ctx.moveTo(this.from.x + camera.x, this.from.y + camera.y)
+        ctx.lineTo(this.to.x + camera.x, this.to.y + camera.y)
         ctx.stroke()
     }
 }
@@ -253,8 +329,9 @@ function playerToCenter(player: Player) {
     const x = canvas.width / 2 - player.getAxis().x
     const y = canvas.height / 2 - player.getAxis().y
     camera = {x, y}
+    // camera = {x: 0, y: 0}
 }
-
+let then: number = window.performance.now()
 // engine ================================================================>
 class RenderingEngine {
     static rectLines: Array<Line> = []
@@ -263,10 +340,15 @@ class RenderingEngine {
     static entitiesToRender = new Map<string, Player>()
     static rotateAngle: number = 1
 
-    static loop() {
-        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
-        RenderingEngine.upload()
-        RenderingEngine.render()
+    static loop(timestamp: number) {
+        const fps = 1000/60     // 60fps
+        const elapsed = timestamp - then
+        if(elapsed >= fps) {
+            then = timestamp - (elapsed % fps)
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
+            RenderingEngine.render()
+            RenderingEngine.upload()
+        }
         requestAnimationFrame(RenderingEngine.loop)
     }
 
@@ -279,39 +361,48 @@ class RenderingEngine {
         // camera
         players.forEach((value, key) => {
             if(key === userId) {
-                playerToCenter(value)
+                playerToCenter(value)                
             }
         })
+
         // floor
         renderFloor()
+
         // walls
         walls.forEach((value, _key) => {
             value.create()
         })
+
         // players
         let myPlayerData!: Player
+
         players.forEach((value, key) => {
             restoreIntersectionPoints(players.get(userId)!, RenderingEngine.rotateAngle)
             if(key === userId) {
                 myPlayerData = value
+                // // draw Rays
+                // for(let i = 0; i < 360 / RenderingEngine.rotateAngle; i++) {
+                //     new Ray(value.getAxis(), RenderingEngine.rayPoints[i], "red").create()
+                // }
             }
             // 보안상의 이유로  
             if(isEntityInSight(players.get(userId)!, value)) {
                 value.create()
             }
+            
         })
+
         fog.save()
         fog.fillStyle = "black"
         fog.fillRect(0, 0, window.innerWidth, window.innerHeight)
         fog.restore()
-        
-        /*
-        for(const point of RenderingEngine.rayPoints) {
-            new Ray(value.getAxis(), point, "red").create()
-        }
-        */
+
         renderPlayerSight(myPlayerData, RenderingEngine.rayPoints, RenderingEngine.rotateAngle)
-        
+
+        // move data
+        move()
+
+        // reset
         RenderingEngine.rectVertexes = []
         RenderingEngine.rayPoints = []
     }
@@ -338,7 +429,7 @@ socket.on("playerJoin", (id) => {
     RenderingEngine.init()
 })
 socket.on("otherPlayerData", (value) => {
-    new Player(value.id, value.location, value.color).create()
+    new Player(value.id, value.data, value.color).create()
 })
 
 // other players leave
@@ -347,7 +438,7 @@ socket.on("playerLeave", (id) => {
 })
 
 socket.on("otherPlayer", (value) => {
-    players.set(value.id, new Player(value.id, value.location, value.color))
+    players.set(value.id, new Player(value.id, value.data, value.color))
 })
 
 // player move ===========================================================>
@@ -385,26 +476,35 @@ window.addEventListener('keyup', (event) => {
         keyPress.d = false
     }
 })
-const moveSpeed = 8
 const move = () => {
     players.forEach((value, key) => {
         if(key === userId) {
-            if(keyPress.w) {
-                value.move(0, -moveSpeed)
-                
-            }
-            if(keyPress.a) {
-                value.move(-moveSpeed, 0)
-            }
-            if(keyPress.s) {
-                value.move(0, moveSpeed)
-            }
-            if(keyPress.d) {
-                value.move(moveSpeed, 0)
+            for(let i = 0; i < moveSpeed; i++) {
+                walls.forEach(wall => {
+                    detectCollision(value, wall)
+                })
+                if(keyPress.w) {
+                    if(collisionDetection.up) {
+                        value.move("up")
+                    }
+                }
+                if(keyPress.a) {
+                    if(collisionDetection.left) {
+                        value.move("left")
+                    }
+                }
+                if(keyPress.s) {
+                    if(collisionDetection.down){
+                        value.move("down")
+                    }
+                }
+                if(keyPress.d) {
+                    if(collisionDetection.right){
+                        value.move("right")
+                    }
+                }
+                collisionDetection = {left: true, down: true, right: true, up: true}
             }
         }
-        
     })
-    requestAnimationFrame(move)
-}
-requestAnimationFrame(move)
+}   

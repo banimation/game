@@ -1,7 +1,10 @@
 const path = require("path")
 module.exports = {
     mode: "production",
-    entry: "/src/script.ts",
+    entry : {
+        index : "./src/script.ts",
+        subindex :"./src/main.ts"
+    },
     module: {
         rules: [
             {
@@ -16,6 +19,6 @@ module.exports = {
     },
     output: {
         path: path.resolve(__dirname, "public/dist"),
-        filename: "bundle.js"
+        filename : '[name]_bundle.js'
     }
 }
