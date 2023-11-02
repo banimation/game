@@ -21,7 +21,7 @@ const roomsDB = mysql.createConnection({ // 참조: https://stackoverflow.com/qu
 playersDB.connect()
 roomsDB.connect()
 
-type userData = {uid: number, id: string, pw: string}
+type userData = {uid: number, id: string, password: string}
 type roomData = {uid: number, name: string, pw: string, max: number, current: number, owner: string}
 
 const app = express()
@@ -33,19 +33,54 @@ app.use(express.urlencoded({ extended: false }), express.json())
 const players = new Map()
 
 app.get("/", (_req, res) => {
-    res.sendFile(path.join(__dirname, "../../front/public/html/main.html"))
+    res.sendFile(path.join(__dirname, "../../front/public/html/login.html"))
+})
+app.get("/signUp", (_req, res) => {
+    res.sendFile(path.join(__dirname, "../../front/public/html/signUp.html"))
 })
 app.post("/login", (req, res) => {
     const id: string = req.body.id
     const pw: string = req.body.pw
-    if((id.length <= 11 && id.length >= 3) && (pw.length <= 20 && pw.length >= 8)) {
-        playersDB.query(`INSERT INTO topic (id, pw) VALUES(?, ?);`, [id, pw], (err, result) => {
+    playersDB.query(`SELECT * FROM topic;`, (err: Error, result: Array<userData>) => {
+        if(err) {
+            throw err
+        }
+        let verifit = false
+        const userAcc = result.filter(data => data.id === id)
+        if(userAcc.length === 1) {
+            if(userAcc[0].password === pw) {
+                verifit = true
+            }
+        }
+        if(verifit) {
+            res.json({respone: "succeeded", redirectURL: `/room/${userAcc[0].id}`})
+        } else {
+            res.json({respone: "faild", redirectURL: ""})
+        }
+    })
+})
+app.post("/signUp", (req, res) => {
+    const id: string = req.body.id
+    const pw: string = req.body.pw
+    if((id.length <= 12 && id.length >= 3) && (pw.length <= 20 && pw.length >= 8)) {
+        playersDB.query(`SELECT * FROM topic;`, (err: Error, result: Array<userData>) => {
             if(err) {
                 throw err
             }
-            // res.json({respone: `/game/${result.insertId}`})
-            res.json({respone: `/room/${result.insertId}`})
+            const userAcc = result.filter(data => data.id === id)
+            if(userAcc.length < 1) {
+                playersDB.query(`INSERT INTO topic (id, password) VALUES(?, ?);`, [id, pw], (err, _result) => {
+                    if(err) {
+                        throw err
+                    }
+                    res.json({respone: "succeeded", redirectURL: `/`})
+                })
+            } else {
+                res.json({respone: "idIsExist", redirectURL: ``})
+            }
         })
+    } else {
+        res.json({respone: "numberOfCharErr", redirectURL: ``})
     }
 })
 app.get("/game/:uid", (req, res) => {

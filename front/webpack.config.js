@@ -3,7 +3,8 @@ module.exports = {
     mode: "production",
     entry : {
         index : "./src/index.ts",
-        main :"./src/main.ts",
+        login :"./src/login.ts",
+        signUp : "./src/signUp.ts",
         room: "./src/room.ts"
     },
     module: {
