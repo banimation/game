@@ -24,6 +24,8 @@ let userId: string
 
 const socket = io()
 
+let roomName: string;
+
 type Axis = {
     x: number,
     y: number
@@ -353,7 +355,7 @@ class RenderingEngine {
     }
 
     static upload() {
-        socket.emit("userData", players.get(userId))
+        socket.emit("userData", {roomName, player: players.get(userId)})
     }
 
     static render() {
@@ -421,15 +423,20 @@ class RenderingEngine {
 }
 
 // socket ==============================================================>
-socket.on("playerJoin", (id) => {
+socket.on("playerJoin", (data) => {
     console.log("joined!")
-    userId = id
+    roomName = data.roomName
+    userId = data.id
     new Player(userId, {x: 1, y: 1, w: 50, h: 50}, randomColor()).create()
-    socket.emit("created", players.get(id))
+    socket.emit("created", {roomName, player: players.get(data.id)})
     RenderingEngine.init()
 })
 socket.on("otherPlayerData", (value) => {
     new Player(value.id, value.data, value.color).create()
+})
+
+socket.on("otherPlayer", (value) => {
+    players.set(value.id, new Player(value.id, value.data, value.color))
 })
 
 // other players leave
@@ -437,9 +444,6 @@ socket.on("playerLeave", (id) => {
     players.delete(id)
 })
 
-socket.on("otherPlayer", (value) => {
-    players.set(value.id, new Player(value.id, value.data, value.color))
-})
 
 // player move ===========================================================>
 const keyPress = {
