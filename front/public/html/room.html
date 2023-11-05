@@ -3,13 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/room.css">
     <title>room</title>
 </head>
 <body>
-    <h1 id="welcome">Welcome!</h1>
-    <input type="text" placeholder="방 이름" id="name">
-    <input type="text" placeholder="비밀번호" id="password">
-    <input type="button" value="create" id="createBtn">
+    <div id="main-container">
+        <h1 id="welcome">Welcome!</h1>
+        <input type="text" placeholder="방 이름" id="name">
+        <input type="text" placeholder="비밀번호" id="password">
+        <input type="button" value="create" id="createBtn">
+    </div>
+    <div id="roomList-container">
+        <h2>Rooms</h2>
+        <input type="button" value="reload" id="reloadBtn">
+        <div id="roomList"></div>
+    </div>
 </body>
 <script src="/dist/room_bundle.js"></script>
 </html>

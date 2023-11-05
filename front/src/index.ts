@@ -6,25 +6,24 @@ const ctx = canvas.getContext("2d") as CanvasRenderingContext2D
 const fogCanvas = document.getElementById("fog") as HTMLCanvasElement
 const fog = fogCanvas.getContext("2d") as CanvasRenderingContext2D
 
-const floorCanvas = document.getElementById("floor") as HTMLCanvasElement
-const floor = floorCanvas.getContext("2d") as CanvasRenderingContext2D
+const UICanvas = document.getElementById("ui") as HTMLCanvasElement
+const UI = UICanvas.getContext("2d") as CanvasRenderingContext2D
 
 fogCanvas.width = window.innerWidth
 fogCanvas.height = window.innerHeight
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
-floorCanvas.width = window.innerWidth
-floorCanvas.height = window.innerHeight
+UICanvas.width = window.innerWidth
+UICanvas.height = window.innerHeight
 
 const walls = new Map<Rect, Rect>()
 const players = new Map<string, Player>()
 let camera: {x: number, y: number} = {x: 0, y: 0}
 
 let userId: string
+let userName: string
 
 const socket = io()
-
-let roomName: string;
 
 type Axis = {
     x: number,
@@ -210,16 +209,22 @@ class Player {
     id: string
     data: Entity
     color: string
-    constructor(id: string, data: Entity, color: string) {
+    name: string
+    constructor(id: string, data: Entity, color: string, name: string) {
         this.id = id
         this.data = data
         this.color = color
+        this.name = name
     }
     create() {
         ctx.save()
         ctx.fillStyle = this.color;
         //ctx.drawImage(this.texture, this.data.x, this.data.y, this.data.w, this.data.h)
         ctx.fillRect(this.data.x + camera.x, this.data.y + camera.y, this.data.w, this.data.h)
+        ctx.font = "20px sans-serif"
+        ctx.textAlign = "left"
+        ctx.fillStyle = "black";
+        ctx.fillText(this.name, this.data.x + camera.x, this.data.y + camera.y + this.data.h * 3 / 2)
         ctx.restore()
         players.set(this.id, this)
     }
@@ -348,6 +353,7 @@ class RenderingEngine {
         if(elapsed >= fps) {  // 60프레임으로 제한
             then = timestamp - (elapsed % fps)
             ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
+            UI.clearRect(0, 0, window.innerWidth, window.innerHeight)
             RenderingEngine.render()
             RenderingEngine.upload()
         }
@@ -355,7 +361,7 @@ class RenderingEngine {
     }
 
     static upload() {
-        socket.emit("userData", {roomName, player: players.get(userId)})
+        socket.emit("userData", players.get(userId))
     }
 
     static render() {
@@ -366,7 +372,13 @@ class RenderingEngine {
                 playerToCenter(value)                
             }
         })
-
+        // some UI
+        UI.font = "20px sans-serif"
+        UI.textAlign = "center"
+        ctx.textBaseline = "middle"
+        UI.fillStyle = "#fff"
+        UI.fillText(`${players.size} / 5`, 50, window.innerHeight - 10)
+        UI.fillText(`시작`, window.innerWidth - 50, window.innerHeight - 10)
         // floor
         renderFloor()
 
@@ -410,7 +422,7 @@ class RenderingEngine {
     }
 
     static init() {
-        players.set(userId, new Player(userId, {x: 1, y: 1, w: 50, h: 50}, randomColor()))
+        players.set(userId, new Player(userId, {x: 1, y: 1, w: 50, h: 50}, randomColor(), userName))
         new Rect({x: 700, y: 300, w: 50, h: 200}).create()
 
         new Rect({x: 200, y: 200, w: 100, h: 400}).create()
@@ -423,20 +435,20 @@ class RenderingEngine {
 }
 
 // socket ==============================================================>
-socket.on("playerJoin", (data) => {
+socket.on("playerJoin", (data: {socketId: string, userId: string}) => {
     console.log("joined!")
-    roomName = data.roomName
-    userId = data.id
-    new Player(userId, {x: 1, y: 1, w: 50, h: 50}, randomColor()).create()
-    socket.emit("created", {roomName, player: players.get(data.id)})
+    userId = data.socketId
+    userName = data.userId
+    new Player(userId, {x: 1, y: 1, w: 50, h: 50}, randomColor(), data.userId).create()
+    socket.emit("created", players.get(data.socketId))
     RenderingEngine.init()
 })
 socket.on("otherPlayerData", (value) => {
-    new Player(value.id, value.data, value.color).create()
+    new Player(value.id, value.data, value.color, value.name).create()
 })
 
 socket.on("otherPlayer", (value) => {
-    players.set(value.id, new Player(value.id, value.data, value.color))
+    players.set(value.id, new Player(value.id, value.data, value.color, value.name))
 })
 
 // other players leave

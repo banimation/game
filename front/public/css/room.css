@@ -1,0 +1,40 @@
+* {
+    margin: 0px;
+    padding: 0px;
+    user-select: none;
+}
+body {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.room {
+    border: solid 1px black;
+    background-color: #000;
+    height: 50px;
+    width: 300px;
+    color: #fff;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 10px;
+}
+#roomList {
+    display: flex;
+    flex-direction: column;
+    height: 70vh;
+    overflow: scroll;
+}
+#roomList::-webkit-scrollbar {
+    display: none;
+}
+#main-container, #roomList-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+#welcome {
+    margin-bottom: 10px;
+}
