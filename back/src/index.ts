@@ -4,7 +4,7 @@ import * as path from "node:path"
 import { Server } from "socket.io"
 import * as mysql from "mysql"
 import { password } from "../ignore/mysql/config.json"
-import { secret } from "../ignore/session/config.json"
+import { secret } from "../ignore/sessionOption/config.json"
 import session from 'express-session'
 
 
