@@ -6,15 +6,14 @@ const ctx = canvas.getContext("2d") as CanvasRenderingContext2D
 const fogCanvas = document.getElementById("fog") as HTMLCanvasElement
 const fog = fogCanvas.getContext("2d") as CanvasRenderingContext2D
 
-const UICanvas = document.getElementById("ui") as HTMLCanvasElement
-const UI = UICanvas.getContext("2d") as CanvasRenderingContext2D
+const UI = document.getElementById("UI") as HTMLElement
+const currentPlayer = document.getElementById("current-player") as HTMLElement
+const start = document.getElementById("start") as HTMLElement
 
 fogCanvas.width = window.innerWidth
 fogCanvas.height = window.innerHeight
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
-UICanvas.width = window.innerWidth
-UICanvas.height = window.innerHeight
 
 const walls = new Map<Rect, Rect>()
 const players = new Map<string, Player>()
@@ -353,7 +352,6 @@ class RenderingEngine {
         if(elapsed >= fps) {  // 60프레임으로 제한
             then = timestamp - (elapsed % fps)
             ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
-            UI.clearRect(0, 0, window.innerWidth, window.innerHeight)
             RenderingEngine.render()
             RenderingEngine.upload()
         }
@@ -372,13 +370,6 @@ class RenderingEngine {
                 playerToCenter(value)                
             }
         })
-        // some UI
-        UI.font = "20px sans-serif"
-        UI.textAlign = "center"
-        ctx.textBaseline = "middle"
-        UI.fillStyle = "#fff"
-        UI.fillText(`${players.size} / 5`, 50, window.innerHeight - 10)
-        UI.fillText(`시작`, window.innerWidth - 50, window.innerHeight - 10)
         // floor
         renderFloor()
 
@@ -419,6 +410,8 @@ class RenderingEngine {
         // reset
         RenderingEngine.rectVertexes = []
         RenderingEngine.rayPoints = []
+
+        currentPlayer.innerText = `${players.size}/5`
     }
 
     static init() {

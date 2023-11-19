@@ -22,3 +22,9 @@ body {
     z-index: 30;
     backdrop-filter: grayscale(0.5);
 }
+#UI {
+    position: absolute;
+    z-index: 100;
+    color: #fff;
+    bottom: 0px;
+}

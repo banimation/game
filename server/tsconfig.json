@@ -2,11 +2,11 @@
     "compilerOptions": {
         "exactOptionalPropertyTypes": true,
         "module": "CommonJS",
-        "lib": ["ESNext"],
+        "lib": ["ESNext", "DOM"],
         "noEmitOnError": true,
         "noUnusedParameters": true,
         "esModuleInterop": true,
-        "outDir": "front/public",
+        "outDir": "dist",
         "strict": true,
         "target": "ES2016",
         "resolveJsonModule": true

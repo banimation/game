@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "@types/ejs": "^3.1.4",
+    "@types/electron": "^1.6.10",
     "@types/express": "^4.17.18",
     "@types/express-session": "^1.17.9",
     "@types/mysql": "^2.15.23",
@@ -8,9 +9,12 @@
   },
   "dependencies": {
     "ejs": "^3.1.9",
+    "electron": "^27.0.4",
+    "electron-store": "^8.1.0",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "mysql": "^2.18.1",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.2",
+    "typescript": "^5.2.2"
   }
 }

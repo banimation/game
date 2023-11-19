@@ -5,9 +5,14 @@
         "lib": ["ESNext", "DOM"],
         "noEmitOnError": true,
         "noUnusedParameters": true,
-        "outDir": "public/dist",
+        "esModuleInterop": true,
+        "outDir": "dist",
         "strict": true,
-        "target": "ESNext"
+        "target": "ES2016",
+        "resolveJsonModule": true
     },
-    "include": ["src/**/*"]
+    "ts-node": {
+        "files": true
+    },
+    "include": ["src/main.ts"]
 }

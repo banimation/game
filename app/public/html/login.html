@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>main</title>
-    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
     <h1>Login</h1>
     <input type="text" placeholder="아이디" id="id">
-    <input type="text" placeholder="비밀번호" id="password">
+    <input type="password" placeholder="비밀번호" id="password">
     <input type="button" value="login" id="login"> <br>
     <a href="/signUp">no have account</a>
 </body>
-<script src="/dist/login_bundle.js"></script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="../dist/login_bundle.js"></script>
 </html>
