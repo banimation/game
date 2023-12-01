@@ -73,7 +73,7 @@ const getRoomData = () => {
                 socket.emit("joinRoom-request", data)
                 socket.on("joinRoom-response", (res) => {
                     if(res) {
-                        ipcRenderer.send("store-roomData-session", {
+                        ipcRenderer.send("store-roomData-session-request", {
                             uid: val.uid,
                             name: val.name,
                             max: val.max,

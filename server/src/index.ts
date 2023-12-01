@@ -146,39 +146,6 @@ io.on('connection', (socket) => {
             socket.emit("createRoom-response", {verifit: false})
         }
     })
-
-})
-
-app.post("/signUp", (req, res) => {
-    const id: string = req.body.id
-    const pw: string = req.body.pw
-    if((id.length <= 12 && id.length >= 3) && (pw.length <= 20 && pw.length >= 8)) {
-        if(!(id.match(pattern))) {
-            playersDB.query(`SELECT * FROM topic;`, (err: Error, result: Array<accData>) => {
-                if(err) {
-                    throw err
-                }
-                const userAcc = result.filter(data => data.id === id)
-                if(userAcc.length < 1) {
-                    playersDB.query(`INSERT INTO topic (id, password) VALUES(?, ?);`, [id, pw], (err, _result) => {
-                        if(err) {
-                            throw err
-                        }
-                        res.json({response: "succeeded", redirectURL: `/`})
-                    })
-                } else {
-                    res.json({response: "idIsExist", redirectURL: ``})
-                }
-            })
-        } else {
-            res.json({response: "numberOfCharErr", redirectURL: ``})
-        }
-    } else {
-        res.json({response: "numberOfCharErr", redirectURL: ``})
-    }
-})
-
-io.on('connection', (socket) => {
     let joinedRoomName: any
     let joinedRoomUid: any
     let joinedUserName: any
@@ -222,12 +189,14 @@ io.on('connection', (socket) => {
     })
 
     socket.on("start-request", (_req) => {
-        const random = Math.floor(Math.random() * 5)
+        const random = Math.floor(Math.random() * 1)
         const socketId = Array.from(players.keys())[random]
         const playerValue = players.get(socketId)!
+        console.log(socketId, playerValue)
         playerValue.role = "tagger"
         players.set(socketId, playerValue)
-        socket.to(socketId).emit("you-are-tagger", players.get(socketId))
+        console.log(players.get(socketId))
+        socket.emit("you-are-tagger", players.get(socketId))
     })
 
     socket.on('disconnect', async () => {
@@ -258,4 +227,34 @@ io.on('connection', (socket) => {
         }
     })
 })
+
+// app.post("/signUp", (req, res) => {
+//     const id: string = req.body.id
+//     const pw: string = req.body.pw
+//     if((id.length <= 12 && id.length >= 3) && (pw.length <= 20 && pw.length >= 8)) {
+//         if(!(id.match(pattern))) {
+//             playersDB.query(`SELECT * FROM topic;`, (err: Error, result: Array<accData>) => {
+//                 if(err) {
+//                     throw err
+//                 }
+//                 const userAcc = result.filter(data => data.id === id)
+//                 if(userAcc.length < 1) {
+//                     playersDB.query(`INSERT INTO topic (id, password) VALUES(?, ?);`, [id, pw], (err, _result) => {
+//                         if(err) {
+//                             throw err
+//                         }
+//                         res.json({response: "succeeded", redirectURL: `/`})
+//                     })
+//                 } else {
+//                     res.json({response: "idIsExist", redirectURL: ``})
+//                 }
+//             })
+//         } else {
+//             res.json({response: "numberOfCharErr", redirectURL: ``})
+//         }
+//     } else {
+//         res.json({response: "numberOfCharErr", redirectURL: ``})
+//     }
+// })
+
 app.use(express.static(`${__dirname}/../../app/public`))

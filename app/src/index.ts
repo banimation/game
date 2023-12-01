@@ -8,7 +8,9 @@ const fog = fogCanvas.getContext("2d") as CanvasRenderingContext2D
 const UI = document.getElementById("UI") as HTMLElement
 const currentPlayer = document.getElementById("current-player") as HTMLElement
 const start = document.getElementById("start") as HTMLElement
-
+const option = document.getElementById("option") as HTMLElement
+const optionBtn = document.getElementById("optionBtn") as HTMLImageElement
+const leave = document.getElementById("leave") as HTMLElement
 
 fogCanvas.style.width = `${window.innerWidth}`
 fogCanvas.style.height = `${window.innerHeight}`
@@ -60,15 +62,15 @@ ipcRenderer.on("session-response", (_event, res) => {
 socket.on("player-join-response", (res) => {
     socketId = res
     userName = userSession.id
-    new Player(socketId, {x: 1, y: 1, w: 50, h: 50}, randomColor(), userName).create()
+    new Player(socketId, {x: 1, y: 1, w: 50, h: 50}, randomColor(), userName, "runner").create()
     socket.emit("created", players.get(socketId))
     RenderingEngine.init()
 })
 socket.on("create-players", (res) => {
-    new Player(res.id, res.data, res.color, res.name).create()
+    new Player(res.id, res.data, res.color, res.name, res.role).create()
 })
 socket.on("update-other-user-data", (res) => {
-    players.set(res.id, new Player(res.id, res.data, res.color, res.name))
+    players.set(res.id, new Player(res.id, res.data, res.color, res.name, res.role))
 })
 socket.on("playerLeave", (id) => {
     players.delete(id)
@@ -242,19 +244,19 @@ function detectCollision(player: Player, rect: Rect) {
     }
     collisionDetection = {left, down, right, up}
 }
-const playerImage = new Image(120, 120)
+const playerImage = new Image(68, 160)
 class Player {
     id: string
     data: Entity
     color: string
     name: string
     role: string
-    constructor(id: string, data: Entity, color: string, name: string) {
+    constructor(id: string, data: Entity, color: string, name: string, role: string) {
         this.id = id
         this.data = data
         this.color = color
         this.name = name
-        this.role = "runner"
+        this.role = role
     }
     create() {
         ctx.save()
@@ -262,11 +264,15 @@ class Player {
         ctx.fillRect(this.data.x + camera.x, this.data.y + camera.y, this.data.w, this.data.h)
         ctx.font = "20px sans-serif"
         ctx.textAlign = "left"
-        ctx.fillStyle = "black";
+        if(this.role === "runner") {
+            ctx.fillStyle = "black";
+        } else {
+            ctx.fillStyle = "red";
+        }
         ctx.fillText(this.name, this.data.x + camera.x, this.data.y + camera.y + this.data.h * 3 / 2)
         ctx.restore()
-        playerImage.src = "../texture/character/2.png"
-        ctx.drawImage(playerImage, this.data.x + camera.x, this.data.y + camera.y)
+        playerImage.src = "../texture/character/2_40x17_x4.png"
+        ctx.drawImage(playerImage, this.data.x + camera.x - this.data.w + playerImage.width/2, this.data.y + camera.y - this.data.w/2 - playerImage.height/2)
         players.set(this.id, this)
     }
     getAxis() {
@@ -457,7 +463,6 @@ class RenderingEngine {
     }
 
     static init() {
-        players.set(socketId, new Player(socketId, {x: 1, y: 1, w: 50, h: 50}, randomColor(), userName))
         new Rect({x: 700, y: 300, w: 50, h: 200}).create()
 
         new Rect({x: 200, y: 200, w: 100, h: 400}).create()
@@ -539,16 +544,34 @@ const move = () => {
         }
     })
 }
+let optionPop = false
+optionBtn.addEventListener("click", () => {
+    if(!optionPop) {
+        option.style.display = "block"
+        optionPop = true
+    } else {
+        option.style.display = "none"
+        optionPop = false
+    }
+    
+})
 let isStart = false
 start.addEventListener("click", async () => {
     if(!isStart) {
-        if(players.size === 5) {
+        if(players.size === 1) {
             isStart = true
-            const random = Math.floor(Math.random() * 5)
             socket.emit("start-request")
         }  
     }
 })
+leave.addEventListener("click", () => {
+    ipcRenderer.send("store-roomData-session-request", {})
+    location.replace("room.html")
+})
 socket.on("you-are-tagger", (res) => {
-    players.set(res.id, new Player(res.id, res.data, res.color, res.name))
+    if(res.id === socketId) {
+        console.log("you are tagger!")
+        console.log(res.role)
+        players.set(res.id, new Player(res.id, res.data, res.color, res.name, res.role))
+    }
 })
