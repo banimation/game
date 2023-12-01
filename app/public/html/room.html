@@ -7,17 +7,33 @@
     <title>room</title>
 </head>
 <body>
-    <div id="main-container">
-        <h1 id="welcome">Welcome!</h1>
-        <input type="text" placeholder="방 이름" id="name">
-        <input type="text" placeholder="비밀번호" id="password">
-        <input type="button" value="create" id="createBtn">
+    <div id="body-container">
+        <div id="main-container">
+            <div id="title">무서운 집</div>
+            <img src="../texture/character/2.png" alt="" id="character">
+            <div id="select-list">
+                <div id="play" class="select-item">PLAY</div>
+                <div id="option" class="select-item">OPTION</div>
+            </div>
+            
+        </div>
+        <div id="room-container" class="room-container-hidden">
+            <div id="create-container">
+                <h1 id="welcome">Welcome!</h1>
+                <input tabindex="-1" type="text" placeholder="방 이름" id="name">
+                <input tabindex="-1" type="text" placeholder="비밀번호" id="password">
+                <input tabindex="-1" type="button" value="create" id="createBtn">
+            </div>
+            <div id="roomList-container">
+                <h2>Rooms</h2>
+                <input tabindex="-1" type="button" value="reload" id="reloadBtn">
+                <div id="roomList"></div>
+            </div>
+            <div id="room-back">back</div>
+        </div>
     </div>
-    <div id="roomList-container">
-        <h2>Rooms</h2>
-        <input type="button" value="reload" id="reloadBtn">
-        <div id="roomList"></div>
-    </div>
+    
+    
 </body>
 <script src="../dist/room_bundle.js"></script>
 </html>

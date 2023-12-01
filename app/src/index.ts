@@ -1,28 +1,28 @@
 import { io } from "socket.io-client"
+import { ipcRenderer } from "electron"
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D
-
 const fogCanvas = document.getElementById("fog") as HTMLCanvasElement
 const fog = fogCanvas.getContext("2d") as CanvasRenderingContext2D
-
 const UI = document.getElementById("UI") as HTMLElement
 const currentPlayer = document.getElementById("current-player") as HTMLElement
 const start = document.getElementById("start") as HTMLElement
 
-fogCanvas.width = window.innerWidth
-fogCanvas.height = window.innerHeight
-canvas.width = window.innerWidth
-canvas.height = window.innerHeight
+
+fogCanvas.style.width = `${window.innerWidth}`
+fogCanvas.style.height = `${window.innerHeight}`
+canvas.style.width = `${window.innerWidth}`
+canvas.style.height = `${window.innerHeight}`
 
 const walls = new Map<Rect, Rect>()
 const players = new Map<string, Player>()
 let camera: {x: number, y: number} = {x: 0, y: 0}
 
-let userId: string
+let socketId: string
 let userName: string
 
-const socket = io()
+const socket = io("http://175.210.246.237:3000")
 
 type Axis = {
     x: number,
@@ -35,9 +35,48 @@ type Entity = {
     h: number
 }
 
+interface userSession {
+    uid: number
+    id: string
+}
+
+interface roomSession {
+    uid: number
+    name: string
+    max: number
+    current: number
+    owner: string
+}
+
+let userSession: userSession
+let roomSession: roomSession
+// socket ==============================================================>
+ipcRenderer.send("session-request")
+ipcRenderer.on("session-response", (_event, res) => {
+    userSession = res.userData
+    roomSession = res.roomData
+    socket.emit("player-join-request", { userSession, roomSession })
+})
+socket.on("player-join-response", (res) => {
+    socketId = res
+    userName = userSession.id
+    new Player(socketId, {x: 1, y: 1, w: 50, h: 50}, randomColor(), userName).create()
+    socket.emit("created", players.get(socketId))
+    RenderingEngine.init()
+})
+socket.on("create-players", (res) => {
+    new Player(res.id, res.data, res.color, res.name).create()
+})
+socket.on("update-other-user-data", (res) => {
+    players.set(res.id, new Player(res.id, res.data, res.color, res.name))
+})
+socket.on("playerLeave", (id) => {
+    players.delete(id)
+})
+// socket ==============================================================>
 const image = new Image()
 const imageSize = 768
-image.src = "/texture/floor.png"
+image.src = "../texture/floor.png"
 image.addEventListener("load", () => {
     renderFloor()
 })
@@ -203,28 +242,31 @@ function detectCollision(player: Player, rect: Rect) {
     }
     collisionDetection = {left, down, right, up}
 }
-
+const playerImage = new Image(120, 120)
 class Player {
     id: string
     data: Entity
     color: string
     name: string
+    role: string
     constructor(id: string, data: Entity, color: string, name: string) {
         this.id = id
         this.data = data
         this.color = color
         this.name = name
+        this.role = "runner"
     }
     create() {
         ctx.save()
         ctx.fillStyle = this.color;
-        //ctx.drawImage(this.texture, this.data.x, this.data.y, this.data.w, this.data.h)
         ctx.fillRect(this.data.x + camera.x, this.data.y + camera.y, this.data.w, this.data.h)
         ctx.font = "20px sans-serif"
         ctx.textAlign = "left"
         ctx.fillStyle = "black";
         ctx.fillText(this.name, this.data.x + camera.x, this.data.y + camera.y + this.data.h * 3 / 2)
         ctx.restore()
+        playerImage.src = "../texture/character/2.png"
+        ctx.drawImage(playerImage, this.data.x + camera.x, this.data.y + camera.y)
         players.set(this.id, this)
     }
     getAxis() {
@@ -332,8 +374,8 @@ class Line {
 }
 
 function playerToCenter(player: Player) {
-    const x = canvas.width / 2 - player.getAxis().x
-    const y = canvas.height / 2 - player.getAxis().y
+    const x = window.innerWidth / 2 - player.getAxis().x
+    const y = window.innerHeight / 2 - player.getAxis().y
     camera = {x, y}
     // camera = {x: 0, y: 0}
 }
@@ -359,14 +401,14 @@ class RenderingEngine {
     }
 
     static upload() {
-        socket.emit("userData", players.get(userId))
+        socket.emit("update-user-data", players.get(socketId))
     }
 
     static render() {
         RenderingEngine.rectLines = []
         // camera
         players.forEach((value, key) => {
-            if(key === userId) {
+            if(key === socketId) {
                 playerToCenter(value)                
             }
         })
@@ -382,8 +424,8 @@ class RenderingEngine {
         let myPlayerData!: Player
 
         players.forEach((value, key) => {
-            restoreIntersectionPoints(players.get(userId)!, RenderingEngine.rotateAngle)
-            if(key === userId) {
+            restoreIntersectionPoints(players.get(socketId)!, RenderingEngine.rotateAngle)
+            if(key === socketId) {
                 myPlayerData = value
                 // // draw Rays
                 // for(let i = 0; i < 360 / RenderingEngine.rotateAngle; i++) {
@@ -391,7 +433,7 @@ class RenderingEngine {
                 // }
             }
             // 보안상의 이유로  
-            if(isEntityInSight(players.get(userId)!, value)) {
+            if(isEntityInSight(players.get(socketId)!, value)) {
                 value.create()
             }
             
@@ -415,7 +457,7 @@ class RenderingEngine {
     }
 
     static init() {
-        players.set(userId, new Player(userId, {x: 1, y: 1, w: 50, h: 50}, randomColor(), userName))
+        players.set(socketId, new Player(socketId, {x: 1, y: 1, w: 50, h: 50}, randomColor(), userName))
         new Rect({x: 700, y: 300, w: 50, h: 200}).create()
 
         new Rect({x: 200, y: 200, w: 100, h: 400}).create()
@@ -427,27 +469,7 @@ class RenderingEngine {
     }
 }
 
-// socket ==============================================================>
-socket.on("playerJoin", (data: {socketId: string, userId: string}) => {
-    console.log("joined!")
-    userId = data.socketId
-    userName = data.userId
-    new Player(userId, {x: 1, y: 1, w: 50, h: 50}, randomColor(), data.userId).create()
-    socket.emit("created", players.get(data.socketId))
-    RenderingEngine.init()
-})
-socket.on("otherPlayerData", (value) => {
-    new Player(value.id, value.data, value.color, value.name).create()
-})
 
-socket.on("otherPlayer", (value) => {
-    players.set(value.id, new Player(value.id, value.data, value.color, value.name))
-})
-
-// other players leave
-socket.on("playerLeave", (id) => {
-    players.delete(id)
-})
 
 
 // player move ===========================================================>
@@ -487,7 +509,7 @@ window.addEventListener('keyup', (event) => {
 })
 const move = () => {
     players.forEach((value, key) => {
-        if(key === userId) {
+        if(key === socketId) {
             for(let i = 0; i < moveSpeed; i++) {
                 walls.forEach(wall => {
                     detectCollision(value, wall)
@@ -516,4 +538,17 @@ const move = () => {
             }
         }
     })
-}   
+}
+let isStart = false
+start.addEventListener("click", async () => {
+    if(!isStart) {
+        if(players.size === 5) {
+            isStart = true
+            const random = Math.floor(Math.random() * 5)
+            socket.emit("start-request")
+        }  
+    }
+})
+socket.on("you-are-tagger", (res) => {
+    players.set(res.id, new Player(res.id, res.data, res.color, res.name))
+})
