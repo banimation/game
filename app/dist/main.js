@@ -79,7 +79,7 @@ function createWindow() {
         win.webContents.send("session-response", data);
     });
     win.loadFile(node_path_1.default.join(__dirname, "../public/html/login.html"));
-    // Menu.setApplicationMenu(Menu.buildFromTemplate([]));
+    electron_1.Menu.setApplicationMenu(electron_1.Menu.buildFromTemplate([]));
     win.webContents.once("did-finish-load", () => { });
 }
 electron_1.app.whenReady().then(() => {
