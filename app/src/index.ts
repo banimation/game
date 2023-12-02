@@ -244,7 +244,8 @@ function detectCollision(player: Player, rect: Rect) {
     }
     collisionDetection = {left, down, right, up}
 }
-const playerImage = new Image(68, 160)
+const playerIamgeSize = 200
+const playerImage = new Image(playerIamgeSize, playerIamgeSize)
 class Player {
     id: string
     data: Entity
@@ -269,10 +270,10 @@ class Player {
         } else {
             ctx.fillStyle = "red";
         }
-        ctx.fillText(this.name, this.data.x + camera.x, this.data.y + camera.y + this.data.h * 3 / 2)
+        ctx.fillText(this.name, this.data.x + camera.x, this.data.y + camera.y + playerIamgeSize/2 + 20)
         ctx.restore()
-        playerImage.src = "../texture/character/2_40x17_x4.png"
-        ctx.drawImage(playerImage, this.data.x + camera.x - this.data.w + playerImage.width/2, this.data.y + camera.y - this.data.w/2 - playerImage.height/2)
+        playerImage.src = `../texture/character/x${playerIamgeSize}.png`
+        ctx.drawImage(playerImage,this.data.x + camera.x - playerIamgeSize/3, this.data.y + camera.y - playerIamgeSize/2)
         players.set(this.id, this)
     }
     getAxis() {
