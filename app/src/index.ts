@@ -26,6 +26,9 @@ let userName: string
 
 const socket = io("http://175.210.246.237:3000")
 
+const rectWidthSize = 50
+const rectHeightSize = 100
+
 type Axis = {
     x: number,
     y: number
@@ -62,7 +65,7 @@ ipcRenderer.on("session-response", (_event, res) => {
 socket.on("player-join-response", (res) => {
     socketId = res
     userName = userSession.id
-    new Player(socketId, {x: 1, y: 1, w: 50, h: 50}, randomColor(), userName, "runner").create()
+    new Player(socketId, {x: 1, y: 1, w: rectWidthSize, h: rectHeightSize}, randomColor(), userName, "runner").create()
     socket.emit("created", players.get(socketId))
     RenderingEngine.init()
 })
@@ -244,8 +247,8 @@ function detectCollision(player: Player, rect: Rect) {
     }
     collisionDetection = {left, down, right, up}
 }
-const playerIamgeSize = 200
-const playerImage = new Image(playerIamgeSize, playerIamgeSize)
+const playerImageSize = 200
+const playerImage = new Image(playerImageSize, playerImageSize)
 class Player {
     id: string
     data: Entity
@@ -270,10 +273,20 @@ class Player {
         } else {
             ctx.fillStyle = "red";
         }
-        ctx.fillText(this.name, this.data.x + camera.x, this.data.y + camera.y + playerIamgeSize/2 + 20)
+        ctx.fillText(this.name, this.data.x + camera.x, this.data.y + camera.y + playerImageSize/2 + 20)
         ctx.restore()
-        playerImage.src = `../texture/character/x${playerIamgeSize}.png`
-        ctx.drawImage(playerImage,this.data.x + camera.x - playerIamgeSize/3, this.data.y + camera.y - playerIamgeSize/2)
+        if(keyPress.d) {
+            if(playerMove) {
+                playerImage.src = `../texture/character/move/1x${playerImageSize}.png`
+                playerMove = false
+            } else {
+                playerImage.src = `../texture/character/move/2x${playerImageSize}.png`
+                playerMove = true
+            }
+        } else {
+            playerImage.src = `../texture/character/x${playerImageSize}.png`
+        }
+        ctx.drawImage(playerImage, this.data.x + camera.x - playerImageSize/3, this.data.y + camera.y - playerImageSize/2)
         players.set(this.id, this)
     }
     getAxis() {
@@ -485,6 +498,7 @@ const keyPress = {
     s: false,
     d: false
 }
+let playerMove = true
 window.addEventListener('keydown', (event) => {
     if(event.key === 'w') {
         keyPress.w = true
@@ -559,7 +573,7 @@ optionBtn.addEventListener("click", () => {
 let isStart = false
 start.addEventListener("click", async () => {
     if(!isStart) {
-        if(players.size === 1) {
+        if(players.size >= 2) {
             isStart = true
             socket.emit("start-request")
         }  

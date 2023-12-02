@@ -189,7 +189,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on("start-request", (_req) => {
-        const random = Math.floor(Math.random() * 1)
+        const random = Math.floor(Math.random() * 2)
         const socketId = Array.from(players.keys())[random]
         const playerValue = players.get(socketId)!
         console.log(socketId, playerValue)
@@ -197,6 +197,7 @@ io.on('connection', (socket) => {
         players.set(socketId, playerValue)
         console.log(players.get(socketId))
         socket.emit("you-are-tagger", players.get(socketId))
+        socket.broadcast.to(joinedRoomUid!).emit("you-are-tagger", players.get(socketId))
     })
 
     socket.on('disconnect', async () => {
