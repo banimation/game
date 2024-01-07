@@ -78,10 +78,11 @@ socket.on("playerLeave", (id) => {
 })
 // socket ==============================================================>
 const tileSize = 32
+/** @deprecated */
 function renderFloor(repeat: number) {
     for (let i = 0; i < repeat; i++) {
         for (let k = 0; k < repeat; k++) {
-          ctx.drawImage(Loader.get("../texture/tile.png"), (k * tileSize + camera.x) - (tileSize*repeat/2), (i * tileSize + camera.y - (tileSize*repeat/2)))
+          ctx.drawImage(Loader.get("../texture/tile.png"), (k * tileSize + camera.x), (i * tileSize + camera.x))
         }
     }
 }
@@ -353,11 +354,20 @@ class Rect {
         public endX: number, 
         public endY: number
     ){}
+    isOverlappedWith(rect: Rect){
+        const p1 = new Point2D(this.x, this.y)
+        const p2 = new Point2D(this.endX, this.y)
+        const p3 = new Point2D(this.x, this.endY)
+        const p4 = new Point2D(this.endX, this.endY)
+        return p1.checkInRect(rect) || p2.checkInRect(rect) || p3.checkInRect(rect) || p4.checkInRect(rect)
+    }
 }
 class Point2D {
     constructor(public x: number, public y: number){}
-    isInRect(rect: Rect){
-        return this.x >= rect.x && this.x <= rect.endX && this.y >= rect.y && this.y <= rect.endY
+    checkInRect(rect: Rect){
+        return (
+            this.x >= rect.x && this.x <= rect.endX && this.y >= rect.y && this.y <= rect.endY
+        )
     }
 }
 class Chunk extends Rect {
@@ -378,14 +388,11 @@ class Chunk extends Rect {
             entity.render(ctx)
         }
     }
-    shouldRendered(){
-        const leftTop = new Point2D(camera.x - window.innerWidth / 2, camera.y - window.innerHeight / 2)
-        const rightTop = new Point2D(camera.x + window.innerWidth / 2, camera.y - window.innerHeight / 2)
-        const leftDown = new Point2D(camera.x - window.innerWidth / 2, camera.y + window.innerHeight / 2)
-        const rightDown = new Point2D(camera.x + window.innerWidth / 2, camera.y + window.innerHeight / 2)
+    shouldRendered(player: Player){
+        const pos = player.getAxis()
+        const screen = new Rect(pos.x - window.innerWidth / 2, pos.y - window.innerHeight / 2, pos.x + window.innerWidth / 2, pos.y + window.innerHeight / 2)
 
-        const res = leftTop.isInRect(this) || rightTop.isInRect(this) || leftDown.isInRect(this) || rightDown.isInRect(this)
-        return res
+        return this.isOverlappedWith(screen)
     }
 }
 
@@ -404,7 +411,7 @@ class Tile extends Renderable {
         super(x, y, tileSize, tileSize, Loader.get("../texture/tile.png"))
     }
     render(ctx: CanvasRenderingContext2D): void {
-        ctx.drawImage(this.texture, this.x, this.y, this.width, this.height)
+        ctx.drawImage(this.texture, this.x + camera.x, this.y + camera.y, this.width, this.height)
     }
 }
 // @lotinex-end
@@ -451,11 +458,11 @@ class RenderingEngine {
         })
         // floor
         for(const chunk of RenderingEngine.chunks){
-            if(chunk.shouldRendered()){
-                chunk.render(ctx)
+            if(chunk.shouldRendered(players.get(socketId)!)){
+                chunk.render(RenderingEngine.offScreenContext)
             }
         }
-        //ctx.drawImage(RenderingEngine.offScreenCanvas, 0, 0)
+        ctx.drawImage(RenderingEngine.offScreenCanvas, 0, 0)
 
         // walls
         walls.forEach((value, _key) => {
@@ -495,21 +502,24 @@ class RenderingEngine {
         new Wall({x: 700, y: 600, w: 42, h: 92}).create()
 
 
-        const count = 10;
-        const chunkSize = 10 * tileSize;
-        for(let i=0; i<count; i++){
-            for(let j=0; j<count; j++){
+        //@lotinex
+        const chunkCount = 10;
+        const tileCount = 10;
+        const chunkSize = tileCount * tileSize;
+        for(let i=0; i<chunkCount; i++){
+            for(let j=0; j<chunkCount; j++){
                 const x = j * chunkSize
                 const y = i * chunkSize
                 const chunk = new Chunk(x, y, x + chunkSize, y + chunkSize)
-                for(let y=0; y<count; y++){
-                    for(let x=0; x<count; x++){
-                        chunk.add(new Tile(x * tileSize, y * tileSize))
+                for(let ty=0; ty<tileCount; ty++){
+                    for(let tx=0; tx<tileCount; tx++){
+                        chunk.add(new Tile(x + tx * tileSize, y + ty * tileSize))
                     }
                 }
                 RenderingEngine.chunks.push(chunk)
             }
         }
+        //@lotinex-end
         RenderingEngine.upload()
         requestAnimationFrame(RenderingEngine.loop)
     }
