@@ -359,6 +359,7 @@ class Rect {
         const p2 = new Point2D(this.endX, this.y)
         const p3 = new Point2D(this.x, this.endY)
         const p4 = new Point2D(this.endX, this.endY)
+
         return p1.checkInRect(rect) || p2.checkInRect(rect) || p3.checkInRect(rect) || p4.checkInRect(rect)
     }
 }
@@ -392,7 +393,7 @@ class Chunk extends Rect {
         const pos = player.getAxis()
         const screen = new Rect(pos.x - window.innerWidth / 2, pos.y - window.innerHeight / 2, pos.x + window.innerWidth / 2, pos.y + window.innerHeight / 2)
 
-        return this.isOverlappedWith(screen)
+        return screen.isOverlappedWith(this) || this.isOverlappedWith(screen)
     }
 }
 
@@ -503,8 +504,8 @@ class RenderingEngine {
 
 
         //@lotinex
-        const chunkCount = 10;
-        const tileCount = 10;
+        const chunkCount = 1;
+        const tileCount = 100;
         const chunkSize = tileCount * tileSize;
         for(let i=0; i<chunkCount; i++){
             for(let j=0; j<chunkCount; j++){
