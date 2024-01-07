@@ -44,7 +44,7 @@ function createWindow () {
         win.webContents.send("session-response", data)
     })
     win.loadFile(path.join(__dirname, "../public/html/login.html"))
-    Menu.setApplicationMenu(Menu.buildFromTemplate([]));
+    // Menu.setApplicationMenu(Menu.buildFromTemplate([]));
     win.webContents.once("did-finish-load", () => {})
 }
 

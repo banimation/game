@@ -1,7 +1,7 @@
 import { ipcRenderer } from "electron"
 import { io } from "socket.io-client"
 
-const socket = io("http://175.210.246.237:3000")
+const socket = io("http://localhost:3000")
 ipcRenderer.send("session-request")
 ipcRenderer.on("session-response", (_event, res) => {
     const session = res

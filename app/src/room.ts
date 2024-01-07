@@ -1,17 +1,81 @@
 import { io } from "socket.io-client"
 import { ipcRenderer } from "electron"
 
-const socket = io("http://175.210.246.237:3000")
+const socket = io("http://localhost:3000")
 
-const userName = document.getElementById("welcome") as HTMLElement
+const userName = document.getElementById("welcome")!
 const createBtn = document.getElementById("createBtn") as HTMLInputElement
-const reloadBtn = document.getElementById("reloadBtn") as HTMLElement
-const roomList = document.getElementById("roomList") as HTMLElement
-const playBtn = document.getElementById("play") as HTMLElement
-const mainContainer = document.getElementById("main-container") as HTMLElement
-const roomContainer = document.getElementById("room-container") as HTMLElement
-const roomBack = document.getElementById("room-back") as HTMLElement
+const reloadBtn = document.getElementById("reloadBtn")!
+const roomList = document.getElementById("roomList")!
+const playBtn = document.getElementById("play")!
+const mainContainer = document.getElementById("main-container")!
+const roomContainer = document.getElementById("room-container")!
+const roomBack = document.getElementById("room-back")!
 
+const bg = document.getElementById("bg")!
+const shadow = document.getElementById("shadow")!
+
+const wait = (time: number) => {
+    return new Promise((res) => {
+        setTimeout(() => {
+            res("")
+        }, time * 1000)
+    })
+}
+const lightning1 = new Audio(`../texture/lightning-1.mp3`)
+const lightning2 = new Audio(`../texture/lightning-2.mp3`)
+const rain = new Audio(`../texture/rain.mp3`)
+lightning1.volume = 0.4
+rain.volume = 0.4
+lightning2.volume = 0.7
+rain.loop = true
+rain.play()
+const lightning = async () => {
+    while(true) {
+        await wait(8)
+        if(Math.floor(Math.random() * 2) + 1 === 1) {
+            lightning1.play()
+        } else {
+            lightning2.play()
+        }
+        bg.style.filter = "brightness(6)"
+        shadow.style.opacity = "1"
+        await wait(0.05)
+        bg.style.filter = "brightness(3)"
+        shadow.style.opacity = "0.5"
+        await wait(0.05)
+        bg.style.filter = "brightness(4)"
+        shadow.style.opacity = "0.7"
+        await wait(0.05)
+        bg.style.filter = "brightness(5)"
+        shadow.style.opacity = "0.9"
+        await wait(0.05)
+        bg.style.filter = "brightness(6)"
+        shadow.style.opacity = "1"
+        await wait(0.05)
+        bg.style.filter = "brightness(3)"
+        shadow.style.opacity = "0.5"
+        await wait(0.05)
+        bg.style.filter = "brightness(4)"
+        shadow.style.opacity = "0.7"
+        await wait(0.05)
+        bg.style.filter = "brightness(5)"
+        shadow.style.opacity = "0.9"
+        await wait(0.05)
+        bg.style.filter = "brightness(4)"
+        shadow.style.opacity = "0.7"
+        await wait(0.05)
+        bg.style.filter = "brightness(3)"
+        shadow.style.opacity = "0.5"
+        await wait(0.05)
+        bg.style.filter = "brightness(2)"
+        shadow.style.opacity = "0.2"
+        await wait(0.05)
+        bg.style.filter = "brightness(1)"
+        shadow.style.opacity = "0"
+    }
+}
+lightning()
 playBtn.addEventListener("click", () => {
     mainContainer.classList.add("main-container-hidden")
     roomContainer.classList.remove("room-container-hidden")

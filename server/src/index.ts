@@ -39,8 +39,7 @@ type Entity = {
 
 type players = {
     id: string, 
-    data:Entity, 
-    color: string, 
+    data:Entity,
     name: string,
     role: string
 }
@@ -110,7 +109,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on("joinRoom-request", (req) => {
-        const roomName = req.roomName
+        // const roomName = req.roomName
         const roomUid = req.roomUid
         roomsDB.query(`SELECT * FROM topic WHERE uid=?;`, [roomUid], (err, result) => {
             if(err) {
